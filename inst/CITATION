@@ -1,0 +1,43 @@
+citHeader(
+  "To cite spHawkes in publications, please cite both the paper that the",
+  "package implements and the package itself."
+)
+
+bibentry(
+  bibtype  = "Article",
+  title    = paste("Modelling established and emerging crime hotspots in a",
+                   "period of rapid homicide growth using spatio-temporal",
+                   "Hawkes processes"),
+  author   = c(person("Luis", "Sotomayor"),
+               person("David", "Buil-Gil"),
+               person("Olatunji", "Johnson"),
+               person("Jorge", "Mateu"),
+               person("Ines", "Henriques-Cadby")),
+  journal  = "Journal of the Royal Statistical Society Series A",
+  year     = "2026",
+  note     = "Under review",
+  textVersion = paste(
+    "Sotomayor, L., Buil-Gil, D., Johnson, O., Mateu, J. and",
+    "Henriques-Cadby, I. (2026). Modelling established and emerging crime",
+    "hotspots in a period of rapid homicide growth using spatio-temporal",
+    "Hawkes processes. Journal of the Royal Statistical Society Series A.",
+    "Under review."
+  )
+)
+
+bibentry(
+  bibtype  = "Manual",
+  # Title and version come from DESCRIPTION, so they stay in step with it.
+  title    = paste0("spHawkes: ", meta$Title),
+  author   = c(person("Luis", "Sotomayor"),
+               person("Olatunji", "Johnson"),
+               person("Ines", "Henriques-Cadby")),
+  year     = "2026",
+  note     = paste("R package version", meta$Version),
+  url      = "https://github.com/HenriquesCadbyLab/spHawkes",
+  textVersion = paste0(
+    "Sotomayor, L., Johnson, O. and Henriques-Cadby, I. (2026). ",
+    "spHawkes: ", meta$Title, ". R package version ", meta$Version, ". ",
+    "https://github.com/HenriquesCadbyLab/spHawkes"
+  )
+)

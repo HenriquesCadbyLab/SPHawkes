@@ -1,0 +1,173 @@
+url: https://henriquescadbylab.github.io/spHawkes/
+
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#174A6E"
+    bg: "#F7F9FB"
+    fg: "#1E2A33"
+    secondary: "#4F7692"
+    success: "#2F7D63"
+    navbar-bg: "#102F47"
+    navbar-dark-color: "rgba(255, 255, 255, 0.88)"
+    navbar-dark-hover-color: "#FFFFFF"
+    navbar-dark-active-color: "#FFFFFF"
+    navbar-dark-brand-color: "#FFFFFF"
+    code_bg: "#EAF0F4"
+    base_font: {google: "Inter"}
+    heading_font: {google: "Inter"}
+    code_font: {google: "Fira Code"}
+
+navbar:
+  bg: dark
+  type: dark
+  structure:
+    left: [intro, reference, articles, news]
+    right: [search, github]
+
+reference:
+- title: Fitting a model
+  desc: >
+    The usual entry point. `fit_semihawkes()` runs the whole pipeline from raw
+    `sf` points to a converged fit; the stages it composes are exported
+    individually below, so a single step can be inspected without running the
+    full EM loop.
+  contents:
+  - fit_semihawkes
+  - em_step
+  - summary.semihawkes_fit
+  - plot.semihawkes_fit
+
+- title: Data preparation
+  desc: >
+    Validating and reshaping event data, and the two per-event quantities the
+    background estimator needs: an adaptive kernel bandwidth and a Monte Carlo
+    edge-correction integral.
+  contents:
+  - prepare_events
+  - adaptive_bandwidth
+  - add_adaptive_bandwidth
+  - bg_integral
+  - add_bg_integral
+
+- title: Background intensity
+  desc: >
+    The non-parametric components of the background term
+    \eqn{\mu_0 \mu_T(t) \mu_m(t) \mu_w(t) \mu_b(x, y)} — a long-term trend,
+    calendar-month and day-of-week periodicities, and a spatial surface.
+  contents:
+  - temporal_base_trend
+  - temporal_base_weekly
+  - temporal_base_monthly
+  - background_spatial
+  - background_intensity
+
+- title: Triggering (self-exciting) component
+  desc: >
+    Initial parametric guesses for the temporal and spatial triggering
+    kernels, their evaluation over events and the study domain, and their
+    non-parametric re-estimation from EM responsibility weights.
+  contents:
+  - trigger_temporal_init
+  - trigger_spatial_init
+  - trigger_evaluate
+  - trigger_pairs
+  - trigger_pair_weights
+  - trigger_spatial_marks
+  - trigger_edge_correction
+  - trigger_reestimate_temporal
+  - trigger_reestimate_spatial
+
+- title: Branching structure and uncertainty quantification
+  desc: >
+    Stochastic declustering: Monte Carlo sampling of the branching structure
+    (which events are background vs. triggered, and by whom) from a fitted
+    model, for quantifying uncertainty in any downstream summary.
+  contents:
+  - sample_branching
+  - sample_branching_multi
+  - check_branching_weights
+  - summarize_branching_samples
+
+- title: Diagnostics and visualization
+  desc: >
+    Grid-based intensity snapshots, spatial maps, and animations
+    built from a fitted model.
+  contents:
+  - plot_event_summary
+  - background_trigger_grid
+  - integrate_intensity_period
+  - background_to_grid_sf
+  - crop_background_spatial
+  - plot_intensity_snapshot
+  - animate_intensity_snapshots
+  - inspect_spatial_grid
+
+- title: Simulated example data
+  desc: >
+    A small simulated dataset with known generating values, so that fitted
+    components have real structure to recover and something to be checked
+    against.
+  contents:
+  - sim_events
+  - sim_region
+
+- title: Milwaukee example data
+  desc: >
+    Geocoded drug-related deaths in Milwaukee County from 2020 onward,
+    supplied with a polygonal observation window for illustrating
+    semi-parametric spatio-temporal Hawkes modelling.
+  contents:
+  - milwaukee
+  - milwaukee_county
+
+- title: Simulated crime example data
+  desc: >
+    Events simulated from a semi-parametric Hawkes model fitted to
+    transformed intentional homicide records from Guayaquil, Ecuador,
+    with a geomasked observation window, for illustrating
+    semi-parametric spatio-temporal Hawkes modelling.
+  contents:
+  - crimes
+  - crimes_region
+
+- title: Numerical primitives
+  desc: >
+    Simpson's-rule integration, weighted histograms and Gaussian kernel
+    smoothing, ported from Zhuang & Mateu (2019). Note that the smoothers
+    differ in their boundary handling and are not interchangeable — see
+    `ker.smooth.fft()`.
+  contents:
+  - simpson
+  - simpson.2D
+  - hist.weighted
+  - hist.weighted.2D
+  - ker.smooth.conv
+  - ker.smooth.fft
+  - ker.smooth.2D.fft
+
+- title: Goodness-of-fit diagnostics
+  desc: >
+    Tools for assessing fitted semi-parametric Hawkes models
+    using temporal and spatial residual diagnostics.
+  contents:
+  - gof_time_transform
+  - gof_spatial_residuals
+  - gof_period_residuals
+  - intensity_at_times
+  - plot.semihawkes_gof_time
+  - plot.semihawkes_gof_spatial
+  - plot.semihawkes_gof_period
+
+- title: Package overview
+  contents:
+  - spHawkes-package
+
+articles:
+- title: Articles
+  navbar: ~
+  contents:
+  - getting-started
+  - background-and-triggering
+  - branching-structure-uq
+  - milwaukee-drug-deaths

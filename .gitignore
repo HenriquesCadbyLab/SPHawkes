@@ -1,0 +1,28 @@
+.Rproj.user
+.Rhistory
+.RData
+.Rdata
+.Ruserdata
+.httr-oauth
+.DS_Store
+.quarto
+
+# R build / check artefacts
+*.Rcheck/
+*.tar.gz
+*.tgz
+/inst/doc/
+/doc/
+/Meta/
+
+# rendered vignettes (built at package-build time, not committed)
+vignettes/*.html
+vignettes/*.R
+vignettes/*_files/
+
+# pkgdown site (built by CI, deployed to gh-pages)
+docs/
+vignettes/*_cache/
+
+/vignettes/*_cache/
+vignettes/figures/

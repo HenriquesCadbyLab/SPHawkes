@@ -1,0 +1,57 @@
+Package: spHawkes
+Title: Semi-Parametric Spatio-Temporal Hawkes Process Models
+Version: 0.1.1
+Authors@R: c(
+    person("Luis", "Sotomayor", email = "sotomayorluis441@gmail.com",
+           role = c("aut", "cre","cph"),
+           comment = c(ORCID = "0009-0003-3903-7388")),
+    person("Olatunji", "Johnson", role = c("aut","cph"),
+           comment = c(ORCID = "0000-0002-4080-0999")),
+    person("Ines", "Henriques-Cadby", role = c("aut","cph"),
+           comment = c(ORCID = "0000-0003-3916-7556")),
+    person("David", "Buil-Gil", role = "ctb"),
+    person("Jorge", "Mateu", role = "ctb"))
+Description: Fits semi-parametric spatio-temporal Hawkes (self-exciting)
+    point process models to event data such as crime records, using the
+    stochastic-declustering expectation-maximisation (EM) approach of Zhuang
+    and Mateu (2019) <doi:10.1111/rssa.12429>. The background intensity
+    combines non-parametric long-term trend, weekly, monthly and spatial
+    components, and the triggering kernels in time and space are
+    re-estimated non-parametrically. Also provides data preparation and
+    validation for 'sf' point and polygon inputs, adaptive kernel
+    bandwidths, goodness-of-fit diagnostics, gridded intensity maps, and
+    Monte Carlo sampling of the branching structure to quantify how events
+    divide between background and triggered.
+License: MIT + file LICENSE
+URL: https://github.com/HenriquesCadbyLab/spHawkes, https://henriquescadbylab.github.io/spHawkes/
+BugReports: https://github.com/HenriquesCadbyLab/spHawkes/issues
+Encoding: UTF-8
+Language: en-GB
+LazyData: true
+Roxygen: list(markdown = TRUE)
+Depends:
+    R (>= 4.1)
+Imports:
+    fields,
+    parallel,
+    sf,
+    rlang,
+    spatstat.geom,
+    spatstat.random,
+    foreach,
+    ggplot2 (>= 3.5.0),
+    patchwork,
+    scales,
+    units
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    tidyr,
+    dplyr,
+    doParallel,
+    gifski
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Config/roxygen2/version: 7.3.2
+RoxygenNote: 7.3.2

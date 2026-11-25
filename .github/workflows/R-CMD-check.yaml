@@ -1,0 +1,165 @@
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+name: R-CMD-check
+
+permissions: read-all
+
+jobs:
+  R-CMD-check:
+    runs-on: ${{ matrix.config.os }}
+
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          # `slow: 'true'` switches on the parameter-recovery test in
+          # tests/testthat/test-recovery.R, which fits several full models and
+          # takes minutes. It runs on exactly one job rather than all four:
+          # the estimator is platform-independent, so checking it four times
+          # over would quadruple the cost for no extra information.
+          - {os: ubuntu-latest,  r: 'release',  slow: 'true'}
+          - {os: ubuntu-latest,  r: 'oldrel-1'}
+          - {os: macos-latest,   r: 'release'}
+          - {os: windows-latest, r: 'release'}
+
+    # Backstop so a wedged step can never burn the 6-hour job limit.
+    timeout-minutes: 60
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+      DEBIAN_FRONTEND: noninteractive
+      NEEDRESTART_MODE: a
+      # Empty on every job except the one that sets it in the matrix above;
+      # the test skips itself unless this is exactly "true".
+      SPHAWKES_SLOW_TESTS: ${{ matrix.config.slow }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # sf and spatstat.geom link against GDAL, GEOS, PROJ and udunits.
+      #
+      # On macOS and Windows, CRAN ships binary packages that already bundle
+      # those libraries, and on Linux `use-public-rspm` below fetches Posit's
+      # Ubuntu binaries, so in the normal case nothing needs compiling.
+      # `setup-r-dependencies` also reads each package's SystemRequirements
+      # and installs the matching apt packages via pak -- that is the real
+      # mechanism, and it is sufficient on its own.
+      #
+      # This step is only a safety net for the case where that resolution
+      # comes up short and sf falls back to building from source: without the
+      # -dev headers present, the build fails at configure time with an opaque
+      # "libgdal not found" rather than anything pointing at the real cause.
+      #
+      # It is bounded and non-fatal on purpose. An earlier version of this
+      # step had no timeout and no retry, and a stalled apt mirror wedged the
+      # oldrel-1 job for over an hour -- the safety net became the failure.
+      # Now: apt runs non-interactively (so a debconf or needrestart prompt
+      # cannot block on stdin), gets a short retry, is capped at 10 minutes,
+      # and cannot fail the job. If it does not succeed, pak still gets its
+      # chance on the following steps.
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        timeout-minutes: 10
+        continue-on-error: true
+        run: |
+          set -x
+          for attempt in 1 2 3; do
+            if sudo -E apt-get update -y -o Acquire::Retries=3; then
+              break
+            fi
+            echo "apt-get update failed (attempt $attempt), retrying..."
+            sleep 5
+          done
+          sudo -E apt-get install -y --no-install-recommends \
+            -o Acquire::Retries=3 \
+            -o Dpkg::Use-Pty=0 \
+            libgdal-dev \
+            libgeos-dev \
+            libproj-dev \
+            libudunits2-dev \
+            libsqlite3-dev \
+            libcurl4-openssl-dev \
+            libssl-dev \
+            libxml2-dev
+
+      # macOS only: fields -> spam -> dotCall64 ship compiled code that needs
+      # the OpenMP runtime, and without it loading dotCall64.so fails with
+      # "symbol not found in flat namespace '___kmpc_for_static_fini'", which
+      # breaks every vignette that calls fit_semihawkes(). Homebrew's libomp
+      # is preinstalled on some runner images but not guaranteed, so install
+      # it explicitly (a no-op if it is already there). The dotCall64 step
+      # further down builds against it.
+      - name: Install OpenMP runtime (macOS)
+        if: runner.os == 'macOS'
+        run: brew install libomp
+
+      # Needed to knit the rmarkdown vignette during R CMD check.
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      # macOS only: replace the prebuilt dotCall64 with one compiled here and
+      # linked against Homebrew's libomp.
+      #
+      # fields -> spam -> dotCall64, and the prebuilt dotCall64 binary expects
+      # the OpenMP runtime to be provided at load time ("symbol not found in
+      # flat namespace '___kmpc_for_static_fini'"). Installing libomp alone
+      # does not help, because Homebrew keeps it out of the default library
+      # search path and nothing has loaded it. Building from source with
+      # -lomp records the library in the compiled code itself, and an rpath
+      # lets it be found at run time.
+      #
+      # This runs after setup-r-dependencies so that it overwrites whatever
+      # that step installed, and the final `library(dotCall64)` makes the job
+      # fail here, with a clear message, if the library still cannot be
+      # loaded. The Makevars file is passed through R_MAKEVARS_USER for this
+      # one command only, so it cannot affect any later step.
+      #
+      # gettext is needed as well: R's headers switch on native-language
+      # support (ENABLE_NLS), so compiling any package from source includes
+      # <libintl.h>, which the runner's R toolchain does not provide
+      # ("'libintl.h' file not found"). Homebrew's gettext supplies the header
+      # and the libintl library, and, like libomp, it is keg-only, so both
+      # need explicit include, library and rpath flags.
+      - name: Build dotCall64 from source against libomp (macOS)
+        if: runner.os == 'macOS'
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          HOMEBREW_NO_AUTO_UPDATE=1 brew install gettext
+          OMP="$(brew --prefix libomp)"
+          GT="$(brew --prefix gettext)"
+          test -f "$OMP/lib/libomp.dylib" || { echo "libomp not found at $OMP"; exit 1; }
+          test -f "$GT/include/libintl.h" || { echo "libintl.h not found at $GT"; exit 1; }
+          MV="$RUNNER_TEMP/Makevars"
+          {
+            echo "CPPFLAGS += -I$OMP/include -I$GT/include -Xclang -fopenmp"
+            echo "LDFLAGS += -L$OMP/lib -lomp -Wl,-rpath,$OMP/lib -L$GT/lib -lintl -Wl,-rpath,$GT/lib"
+          } > "$MV"
+          cat "$MV"
+          R_MAKEVARS_USER="$MV" Rscript -e 'install.packages("dotCall64", type = "source", repos = c(CRAN = "https://cloud.r-project.org"))'
+          Rscript -e 'so <- system.file("libs", "dotCall64.so", package = "dotCall64"); cat(so, "\n"); print(system(paste("otool -L", shQuote(so)))); library(dotCall64); cat("dotCall64 loads OK\n")'
+
+      # No --compact-vignettes: the only vignette is HTML, so there is
+      # nothing for ghostscript/qpdf to compact, and requiring them would
+      # add a system dependency for no benefit.
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          upload-snapshots: true
+          args: 'c("--no-manual", "--as-cran")'
+          build_args: 'c("--no-manual")'
