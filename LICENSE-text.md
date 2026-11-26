@@ -1,0 +1,4 @@
+# License
+
+    YEAR: 2026
+    COPYRIGHT HOLDER: Luis Sotomayor, Ines Henriques-Cadby, Olatunji Johnson

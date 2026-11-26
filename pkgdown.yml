@@ -1,0 +1,12 @@
+pandoc: 3.8.3
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  background-and-triggering: background-and-triggering.html
+  branching-structure-uq: branching-structure-uq.html
+  getting-started: getting-started.html
+  milwaukee-drug-deaths: milwaukee-drug-deaths.html
+last_built: 2026-11-26T15:08Z
+urls:
+  reference: https://henriquescadbylab.github.io/spHawkes/reference
+  article: https://henriquescadbylab.github.io/spHawkes/articles
